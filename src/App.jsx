@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import LogForm from "./components/LogForm";
 import LogList from "./components/LogList";
+import LogFilter from "./components/LogFilter"; // Import komponen baru
 
 export default function App() {
   const [logs, setLogs] = useState(() => {
@@ -10,8 +11,9 @@ export default function App() {
   });
   const [editItem, setEditItem] = useState(null);
 
-  // 1. STATE UNTUK PENCARIAN
+  // State untuk pencarian dan filter
   const [kataKunci, setKataKunci] = useState("");
+  const [filterKategori, setFilterKategori] = useState("Semua");
 
   useEffect(() => {
     localStorage.setItem("data_logbook", JSON.stringify(logs));
@@ -38,12 +40,17 @@ export default function App() {
   const handleEdit = (log) => setEditItem(log);
   const handleCancelEdit = () => setEditItem(null);
 
-  // 2. LOGIKA PENYARING DATA
-  const logsYangDitampilkan = logs.filter(
-    (log) =>
+  // Logika Penyaring Ganda (Pencarian & Kategori)
+  const logsYangDitampilkan = logs.filter((log) => {
+    const cocokTeks =
       log.kegiatan.toLowerCase().includes(kataKunci.toLowerCase()) ||
-      log.kategori.toLowerCase().includes(kataKunci.toLowerCase()),
-  );
+      log.kategori.toLowerCase().includes(kataKunci.toLowerCase());
+
+    const cocokKategori =
+      filterKategori === "Semua" || log.kategori === filterKategori;
+
+    return cocokTeks && cocokKategori;
+  });
 
   return (
     <div className="min-h-screen bg-gray-100 p-8 font-sans">
@@ -63,17 +70,15 @@ export default function App() {
               Riwayat Kegiatan
             </h2>
 
-            {/* 3. KOTAK INPUT PENCARIAN */}
-            <input
-              type="text"
-              placeholder="Cari kegiatan atau kategori..."
-              value={kataKunci}
-              onChange={(e) => setKataKunci(e.target.value)}
-              className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:w-64"
+            {/* Panggil komponen LogFilter dan lempar state-nya sebagai Props */}
+            <LogFilter
+              kataKunci={kataKunci}
+              setKataKunci={setKataKunci}
+              filterKategori={filterKategori}
+              setFilterKategori={setFilterKategori}
             />
           </div>
 
-          {/* PERHATIKAN: Data yang dikirim sekarang adalah logsYangDitampilkan, bukan logs aslinya */}
           <LogList
             logs={logsYangDitampilkan}
             editId={editItem?.id}
